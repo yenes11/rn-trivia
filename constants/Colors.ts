@@ -17,3 +17,11 @@ export default {
     tabIconSelected: tintColorDark,
   },
 };
+
+export const colors = {
+  backgroud: '#0B0517',
+  primary: '#C4FE5F',
+  danger: '#fa114f',
+  primaryFade: '#223300',
+  dangerFade: '#320310',
+};
