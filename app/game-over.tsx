@@ -31,7 +31,12 @@ const GameOverScreen = () => {
   const lottieRef = useRef<LottieView>(null);
   const progress = useSharedValue(0);
   const [didAnimationEnd, setDidAnimationEnd] = useState(false);
-  const { initializeSessionQuestions } = useGameStore();
+  const {
+    initializeSessionQuestions,
+    correctAnswerCount,
+    wrongAnswerCount,
+    points,
+  } = useGameStore();
 
   useEffect(() => {
     progress.value = withSequence(
@@ -81,16 +86,36 @@ const GameOverScreen = () => {
               alignSelf: 'center',
             }}
           />
-          <MonoText
+          <Text
             style={{
+              color: 'white',
               fontSize: 24,
             }}
           >
-            450 POINTS
-          </MonoText>
+            {points} POINTS
+          </Text>
+          <Text
+            style={{
+              color: 'white',
+              fontSize: 24,
+            }}
+          >
+            Correct Answers: {correctAnswerCount}
+          </Text>
+          <Text
+            style={{
+              color: 'white',
+              fontSize: 24,
+              marginBottom: 24,
+            }}
+          >
+            Wrong Answers: {wrongAnswerCount}
+          </Text>
+
           <Button
+            rounded
             onPress={() => {
-              initializeSessionQuestions();
+              initializeSessionQuestions('Classic');
               navigation.navigate('game');
             }}
             icon={
@@ -100,6 +125,7 @@ const GameOverScreen = () => {
             label="Play Again"
           />
           <Button
+            rounded
             onPress={() => navigation.navigate('index')}
             icon={<Ionicons name="home" size={18} color="white" />}
             style={{ width: '100%' }}

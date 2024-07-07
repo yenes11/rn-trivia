@@ -1,26 +1,26 @@
 import {
   Pressable,
   PressableProps,
-  StyleProp,
+  type StyleProp,
   StyleSheet,
   Text,
-  TextStyle,
+  type TextStyle,
   View,
-  ViewStyle,
+  type ViewStyle,
   TouchableOpacity,
-  TouchableOpacityProps,
-} from "react-native";
-import React, { ForwardedRef } from "react";
-import { colors } from "@/constants/Colors";
-import Color from "color";
-import { MonoText } from "./StyledText";
+  type TouchableOpacityProps,
+} from 'react-native';
+import React, { type ForwardedRef } from 'react';
+import { colors } from '@/constants/Colors';
+import Color from 'color';
+import { MonoText } from './StyledText';
 import Animated, {
   FadeIn,
   FadeInDown,
   FadeInLeft,
   FadeOut,
   FadeOutUp,
-} from "react-native-reanimated";
+} from 'react-native-reanimated';
 
 const AnimatedTouchableOpacity =
   Animated.createAnimatedComponent(TouchableOpacity);
@@ -28,7 +28,7 @@ const AnimatedTouchableOpacity =
 interface ButtonProps extends TouchableOpacityProps {
   label?: string;
   icon?: React.ReactNode;
-  variant?: "primary" | "secondary" | "danger";
+  variant?: 'primary' | 'secondary' | 'danger';
   rest?: any[];
   style?: StyleProp<ViewStyle>;
   labelStyle?: StyleProp<TextStyle>;
@@ -40,7 +40,7 @@ const Button = React.forwardRef(
     {
       label,
       icon,
-      variant = "primary",
+      variant = 'primary',
       style,
       labelStyle,
       rounded = false,
@@ -50,9 +50,9 @@ const Button = React.forwardRef(
     ref: ForwardedRef<TouchableOpacity>
   ) => {
     const backgroundColor =
-      variant === "primary"
+      variant === 'primary'
         ? colors.primary
-        : variant === "danger"
+        : variant === 'danger'
         ? colors.danger
         : colors.backgroud;
 
@@ -66,10 +66,10 @@ const Button = React.forwardRef(
         style={[
           {
             backgroundColor,
-            borderColor: ["primary", "secondary"].includes(variant)
+            borderColor: ['primary', 'secondary'].includes(variant)
               ? colors.primary
               : colors.danger,
-            borderWidth: 3,
+            borderWidth: 2,
             borderRadius: rounded ? 99 : 12,
             opacity: disabled ? 0.3 : 1,
           },
@@ -82,7 +82,7 @@ const Button = React.forwardRef(
         {label && (
           <Text
             style={[
-              { color: variant === "primary" ? colors.backgroud : "white" },
+              { color: variant === 'primary' ? colors.backgroud : 'white' },
               styles.label,
               labelStyle,
             ]}
@@ -99,18 +99,18 @@ export default Button;
 
 const styles = StyleSheet.create({
   button: {
-    flexDirection: "row",
+    flexDirection: 'row',
     gap: 16,
     paddingHorizontal: 16,
     paddingVertical: 14,
     // borderTopLeftRadius: 24,
     // borderBottomRightRadius: 24,
-    width: "100%",
-    alignItems: "center",
-    justifyContent: "center",
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   label: {
-    fontFamily: "Blauer Medium",
+    fontFamily: 'Blauer Medium',
     fontSize: 22,
     // fontWeight: '400',
   },

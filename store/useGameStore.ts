@@ -1,32 +1,38 @@
-import { getRandomQuestions } from "@/utils/helpers";
-import type { TriviaQuestion } from "@/utils/types";
-import { create, StateCreator } from "zustand";
-import { AnimationObject } from "react-native-reanimated";
-import { triviaQuestions } from "@/assets/questions";
-type Display = "none" | "flex" | undefined;
+import { getRandomQuestions } from '@/utils/helpers';
+import type { TriviaQuestion } from '@/utils/types';
+import { create, StateCreator } from 'zustand';
+import { AnimationObject } from 'react-native-reanimated';
+import { triviaQuestions } from '@/assets/questions';
+type Display = 'none' | 'flex' | undefined;
+type GameMode = 'Classic' | 'Timed';
 
-const LottieSourceFalse = require("@/assets/lottie/wrong.json");
-const LottieSourceTrue = require("@/assets/lottie/confetti.json");
+const LottieSourceFalse = require('@/assets/lottie/wrong.json');
+const LottieSourceTrue = require('@/assets/lottie/confetti.json');
 
 interface GameSlice {
   totalQuestionCount: number;
   sessionQuestions: TriviaQuestion[];
   selectedAnswer: null | string;
+  givenAnswers: string[];
   currentQuestionIndex: number;
   correctLottieDisplay: Display;
   wrongLottieDisplay: Display;
   options: string[];
-  optionsDisabled: boolean[];
   points: number;
-  fiftyFiftyJoker: 1 | 2 | 3;
-  secondChanceJoker: 1 | 2 | 3;
-  changeQuestionJoker: 1 | 2 | 3;
+  chanceToSelect: number;
+  fiftyFiftyJoker: boolean;
+  secondChanceJoker: boolean;
+  changeQuestionJoker: boolean;
+  correctAnswerCount: number;
+  gameMode: GameMode;
+  wrongAnswerCount: number;
   fiftyFifty: () => void;
   changeQuestion: () => void;
   secondChance: () => void;
-  initializeSessionQuestions: () => void;
+  initializeSessionQuestions: (mode: GameMode) => void;
   nextQuestion: () => void;
   selectOption: (answer: string) => void;
+  setGameMode: (mode: GameMode) => void;
   endGame: () => void;
 }
 
@@ -36,12 +42,17 @@ const useGameStore = create<GameSlice>((set, get) => ({
   selectedAnswer: null,
   points: 0,
   currentQuestionIndex: 0,
-  correctLottieDisplay: "none",
-  wrongLottieDisplay: "none",
-  changeQuestionJoker: 1,
-  secondChanceJoker: 1,
-  fiftyFiftyJoker: 1,
-  initializeSessionQuestions: () => {
+  correctLottieDisplay: 'none',
+  wrongLottieDisplay: 'none',
+  changeQuestionJoker: false,
+  secondChanceJoker: false,
+  fiftyFiftyJoker: false,
+  chanceToSelect: 1,
+  givenAnswers: [],
+  correctAnswerCount: 0,
+  gameMode: 'Classic',
+  wrongAnswerCount: 0,
+  initializeSessionQuestions: (mode) => {
     const questions = getRandomQuestions(get().totalQuestionCount);
     const firstQuestion = questions[0];
     const firstQuestionOptions = [
@@ -53,9 +64,14 @@ const useGameStore = create<GameSlice>((set, get) => ({
       points: 0,
       selectedAnswer: null,
       currentQuestionIndex: 0,
-      fiftyFiftyJoker: 1,
-      secondChanceJoker: 1,
-      changeQuestionJoker: 1,
+      fiftyFiftyJoker: true,
+      secondChanceJoker: true,
+      changeQuestionJoker: true,
+      options: [],
+      givenAnswers: [],
+      correctAnswerCount: 0,
+      wrongAnswerCount: 0,
+      gameMode: mode,
     }));
     let duration = 200;
     for (const option of firstQuestionOptions) {
@@ -66,7 +82,6 @@ const useGameStore = create<GameSlice>((set, get) => ({
     }
   },
   options: [],
-  optionsDisabled: [false, false, false, false],
   fiftyFifty: () => {
     const currentQuestion = get().sessionQuestions[get().currentQuestionIndex];
     let deleteCount = 0;
@@ -77,21 +92,21 @@ const useGameStore = create<GameSlice>((set, get) => ({
         continue;
       console.log(toBeDeletedIndex);
       deleteCount++;
-      setTimeout(() => {
-        set((state) => {
-          const options = [...state.options];
-          options.splice(1, 1);
-          return {
-            options,
-            fiftyFiftyJoker: 3,
-          };
-        });
-      }, duration);
+      // setTimeout(() => {
+      set((state) => {
+        const options = [...state.options];
+        options.splice(1, 1);
+        return {
+          options,
+          fiftyFiftyJoker: false,
+        };
+      });
+      // }, duration);
       duration += 200;
     }
   },
   secondChance: () => {
-    set({ secondChanceJoker: 2 });
+    set({ secondChanceJoker: false, chanceToSelect: 2 });
   },
   changeQuestion: () => {
     const sessionQuestionIds = new Set(get().sessionQuestions.map((q) => q.id));
@@ -104,7 +119,7 @@ const useGameStore = create<GameSlice>((set, get) => ({
           () => 0.5 - Math.random()
         );
         sessionQuestions[state.currentQuestionIndex] = question;
-        return { sessionQuestions, options, changeQuestionJoker: 3 };
+        return { sessionQuestions, options, changeQuestionJoker: false };
       });
     }
   },
@@ -112,12 +127,14 @@ const useGameStore = create<GameSlice>((set, get) => ({
     const isLastQuestion =
       get().currentQuestionIndex === get().totalQuestionCount - 1;
     set((state) => ({
-      correctLottieDisplay: "none",
-      wrongLottieDisplay: "none",
+      correctLottieDisplay: 'none',
+      wrongLottieDisplay: 'none',
       currentQuestionIndex: isLastQuestion
         ? state.currentQuestionIndex
         : state.currentQuestionIndex + 1,
       selectedAnswer: null,
+      chanceToSelect: 1,
+      givenAnswers: [],
     }));
     if (isLastQuestion) return;
     const nextQuestion = get().sessionQuestions[get().currentQuestionIndex];
@@ -125,7 +142,7 @@ const useGameStore = create<GameSlice>((set, get) => ({
       ...nextQuestion.wrongAnswers,
       nextQuestion.correctAnswer,
     ].sort(() => 0.5 - Math.random());
-    let duration = 200;
+    let duration = 600;
     for (const option of nextQuestionOptions) {
       setTimeout(() => {
         set((state) => ({ options: [...state.options, option] }));
@@ -136,23 +153,25 @@ const useGameStore = create<GameSlice>((set, get) => ({
   selectOption: (answer: string) => {
     const currentQuestion = get().sessionQuestions[get().currentQuestionIndex];
     const isCorrectAnswer = answer === currentQuestion.correctAnswer;
-    const isSecondChance = get().secondChanceJoker === 2;
+    const changeToSelect = get().chanceToSelect;
+    // const isSecondChance = get().secondChanceJoker === 2;
     set((state) => {
       const newState: Partial<GameSlice> = {
         selectedAnswer: answer,
+        givenAnswers: [...state.givenAnswers, answer],
+        chanceToSelect: state.chanceToSelect - 1,
       };
       if (isCorrectAnswer) {
-        newState.correctLottieDisplay = "flex";
+        newState.correctLottieDisplay = 'flex';
         newState.points = state.points + 150;
-      }
-      if (!isSecondChance) {
-        newState.wrongLottieDisplay = "flex";
-      } else {
-        newState.secondChanceJoker = 3;
+        newState.correctAnswerCount = state.correctAnswerCount + 1;
+      } else if (newState.chanceToSelect === 0) {
+        newState.wrongLottieDisplay = 'flex';
+        newState.wrongAnswerCount = state.wrongAnswerCount + 1;
       }
       return newState;
     });
-    if (isSecondChance && !isCorrectAnswer) {
+    if (changeToSelect === 2 && !isCorrectAnswer) {
       return;
     }
     setTimeout(() => {
@@ -164,6 +183,9 @@ const useGameStore = create<GameSlice>((set, get) => ({
         duration += 200;
       }
     }, 1000);
+  },
+  setGameMode: (mode: GameMode) => {
+    set({ gameMode: mode });
   },
   endGame: () => {},
 }));

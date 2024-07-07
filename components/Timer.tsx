@@ -6,7 +6,7 @@ import React, {
   useRef,
 } from 'react';
 import { StyleSheet } from 'react-native';
-import Svg, { Circle, SvgProps, Text } from 'react-native-svg';
+import Svg, { Circle, type SvgProps, Text } from 'react-native-svg';
 import Animated, {
   Easing,
   interpolateColor,
@@ -16,6 +16,7 @@ import Animated, {
   cancelAnimation,
 } from 'react-native-reanimated';
 import { colors } from '@/constants/Colors';
+import { useNavigation } from 'expo-router';
 
 interface TimerProps extends SvgProps {
   start?: number;
@@ -33,6 +34,7 @@ const AnimatedText = Animated.createAnimatedComponent(Text);
 
 const Timer = forwardRef<TimerRef, TimerProps>(
   ({ start = 60, onTimeout = () => {}, ...rest }, ref) => {
+    const navigation = useNavigation();
     const [seconds, setSeconds] = useState(start);
     const [isRunning, setIsRunning] = useState(false);
     const progress = useSharedValue(0);
@@ -53,26 +55,22 @@ const Timer = forwardRef<TimerRef, TimerProps>(
           });
           intervalRef.current = setInterval(() => {
             setSeconds((prev) => {
-              if (prev === 1) {
-                onTimeout();
-              }
               if (prev > 0) {
                 progress.value = withTiming(
-                  (circumference * (start - (prev - 1))) / start,
+                  (circumference * (start - (prev - 2))) / start,
                   {
                     duration: 1000,
                     easing: Easing.linear,
                   }
                 );
                 return prev - 1;
-              } else {
-                if (intervalRef.current) {
-                  clearInterval(intervalRef.current);
-                  intervalRef.current = null;
-                  setIsRunning(false);
-                }
-                return 0;
               }
+              if (intervalRef.current) {
+                clearInterval(intervalRef.current);
+                intervalRef.current = null;
+                setIsRunning(false);
+              }
+              return 0;
             });
           }, 1000);
         }
@@ -88,7 +86,13 @@ const Timer = forwardRef<TimerRef, TimerProps>(
     }));
 
     useEffect(() => {
-      ref.current?.start(); // Automatically start the timer on mount
+      if (seconds === 0) {
+        onTimeout();
+      }
+    }, [seconds]);
+
+    useEffect(() => {
+      // ref.current?.start(); // Automatically start the timer on mount
 
       return () => {
         if (intervalRef.current) {

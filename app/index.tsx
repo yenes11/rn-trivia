@@ -8,7 +8,7 @@ import {
 
 import EditScreenInfo from '@/components/EditScreenInfo';
 import { Canvas, Fill, vec } from '@shopify/react-native-skia';
-
+import { Image } from 'expo-image';
 import { Text } from '@/components/Themed';
 import { colors } from '@/constants/Colors';
 import Button from '@/components/Button';
@@ -16,7 +16,14 @@ import Timer from '@/components/Timer';
 import { useNavigation } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import useGameStore from '@/store/useGameStore';
-import { Fontisto, Ionicons, MaterialIcons } from '@expo/vector-icons';
+import {
+  Fontisto,
+  Ionicons,
+  MaterialIcons,
+  MaterialCommunityIcons,
+  FontAwesome5,
+} from '@expo/vector-icons';
+
 const { width, height } = Dimensions.get('window');
 const center = vec(width / 2, height / 2);
 
@@ -52,9 +59,8 @@ const rings = [
 export default function TabOneScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
-  const initializeSession = useGameStore(
-    (state) => state.initializeSessionQuestions
-  );
+  const { initializeSessionQuestions, setGameMode } = useGameStore();
+
   return (
     <View
       style={[
@@ -62,21 +68,7 @@ export default function TabOneScreen() {
         { paddingTop: insets.top + 32, paddingBottom: insets.bottom + 16 },
       ]}
     >
-      {/* <View>
-        <Text style={styles.title}>TRIVIA</Text>
-        <Text
-          style={{
-            fontSize: 44,
-            color: colors.primary,
-            fontFamily: 'KanitBold',
-            marginLeft: 32,
-            marginBottom: 32,
-          }}
-        >
-          TREASURE
-        </Text>
-      </View> */}
-      <Ionicons size={96} name="game-controller" color={colors.primary} />
+      <MaterialCommunityIcons name="brain" size={124} color={colors.primary} />
       <Text
         style={{
           color: colors.primary,
@@ -89,15 +81,21 @@ export default function TabOneScreen() {
 
       <Button
         rounded
+        // icon={<MaterialIcons name="gamepad" size={24} color="black" />}
         onPress={() => {
-          initializeSession();
+          initializeSessionQuestions('Classic');
           navigation.navigate('game');
         }}
         label="Classic"
       />
+
       <Button
+        // icon={<MaterialIcons name="timer" size={24} color={colors.primary} />}
+        onPress={() => {
+          initializeSessionQuestions('Timed');
+          navigation.navigate('game');
+        }}
         rounded
-        onPress={() => navigation.navigate('game-over')}
         variant="secondary"
         label="Timed"
       />
